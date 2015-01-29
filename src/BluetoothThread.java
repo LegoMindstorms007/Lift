@@ -62,7 +62,7 @@ public class BluetoothThread implements Runnable {
 					// ignore
 				}
 				// close connection
-				connection.close();
+				// connection.close();
 				lift.goUp();
 			}
 		}
