@@ -3,16 +3,17 @@ import lejos.nxt.Motor;
 
 public class Lift {
 
-	private static final int WAITING_TIME = 1000;// * 60; // 1 Minute
 	// private int angle;
 	private BluetoothThread bThread;
+	private Thread thread;
 	private boolean goDown;
 	private boolean goUp;
 	private boolean running;
 
 	public Lift() {
 		bThread = new BluetoothThread(this);
-		new Thread(bThread).start();
+		thread = new Thread(bThread);
+		thread.start();
 		goDown = false;
 		goUp = true;
 

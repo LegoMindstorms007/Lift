@@ -9,7 +9,9 @@ public class BluetoothThread implements Runnable {
 
 	private static final int MOVE_DOWN = 0;
 	private static final int IS_DOWN = 1;
+	private static final int CLOSE_CONNECTION = 2;
 	private static final int TIMEOUT = 1000 * 30; // half minute
+	private long closeAt;
 	private boolean running;
 	private Lift lift;
 	private NXTConnection connection;
@@ -17,6 +19,7 @@ public class BluetoothThread implements Runnable {
 	public BluetoothThread(Lift lift) {
 		this.lift = lift;
 		connection = null;
+		closeAt = -1;
 	}
 
 	/**
@@ -47,6 +50,13 @@ public class BluetoothThread implements Runnable {
 						case IS_DOWN:
 							boolean canExit = lift.canExitLift();
 							output(dos, canExit);
+							if (canExit)
+								closeAt = System.currentTimeMillis() + TIMEOUT;
+							break;
+						case CLOSE_CONNECTION:
+							connection.close();
+							connection = null;
+							closeAt = -1;
 							break;
 						}
 					}
@@ -61,8 +71,7 @@ public class BluetoothThread implements Runnable {
 				} catch (Exception e) {
 					// ignore
 				}
-				// close connection
-				// connection.close();
+
 				lift.goUp();
 			}
 		}
@@ -84,9 +93,18 @@ public class BluetoothThread implements Runnable {
 	}
 
 	private int input(DataInputStream stream) {
-		int value = 0;
+		int value = -1;
 		try {
-			value = stream.readInt();
+			while ((connection != null) && (stream.available() <= 0)) {
+				sleep(50);
+				if (closeAt > 0 && closeAt <= System.currentTimeMillis()) {
+					connection.close();
+					connection = null;
+				}
+			}
+			if (connection != null) {
+				value = stream.readInt();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
