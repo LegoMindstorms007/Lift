@@ -100,6 +100,7 @@ public class BluetoothThread implements Runnable {
 				if (closeAt > 0 && closeAt <= System.currentTimeMillis()) {
 					connection.close();
 					connection = null;
+					closeAt = -1;
 				}
 			}
 			if (connection != null) {
