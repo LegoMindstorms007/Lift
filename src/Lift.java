@@ -23,7 +23,7 @@ public class Lift {
 			if (goDown) {
 				down();
 			}
-			if (Button.waitForAnyEvent(1000) > 0)
+			if (Button.waitForAnyPress(1000) > 0)
 				running = false;
 		}
 

@@ -11,6 +11,7 @@ public class Lift {
 
 	public Lift() {
 		bThread = new BluetoothThread(this);
+		new Thread(bThread).start();
 		goDown = false;
 		running = true;
 
@@ -83,3 +84,4 @@ public class Lift {
 		}
 	}
 }
+
