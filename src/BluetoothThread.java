@@ -36,7 +36,7 @@ public class BluetoothThread implements Runnable {
 					DataInputStream dis = connection.openDataInputStream();
 					DataOutputStream dos = connection.openDataOutputStream();
 
-					while (isConnected()) {
+					while (running && isConnected()) {
 						int command = input(dis);
 
 						switch (command) {
@@ -50,7 +50,7 @@ public class BluetoothThread implements Runnable {
 
 							if (canExit) {
 								for (int i = 0; (i < TIMEOUT / 1000)
-										&& isConnected(); i++) {
+										&& isConnected() && running; i++) {
 									sleep(1000);
 								}
 								if (isConnected()) {

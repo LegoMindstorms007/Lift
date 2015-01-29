@@ -57,6 +57,7 @@ public class Lift {
 		Motor.B.stop();
 
 		setLEDs(true);
+		goUp = false;
 	}
 
 	private void down() {
