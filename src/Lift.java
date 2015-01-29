@@ -1,5 +1,6 @@
 import lejos.nxt.Button;
 import lejos.nxt.Motor;
+import lejos.nxt.Sound;
 
 public class Lift {
 
@@ -8,6 +9,8 @@ public class Lift {
 	private BluetoothThread bThread;
 	private boolean goDown;
 	private boolean running;
+
+	private static final short[] note = { 2349, 115, 0, 5, 1760, 165, 0, 35 };
 
 	public Lift() {
 		bThread = new BluetoothThread(this);
@@ -25,6 +28,15 @@ public class Lift {
 			}
 			if (Button.waitForAnyPress(1000) > 0)
 				running = false;
+		}
+
+		for (int i = 0; i < note.length; i += 2) {
+			short w = note[i + 1];
+			int n = note[i];
+			if (n != 0) {
+				Sound.playTone(n, w * 10);
+			}
+			sleep(w * 10);
 		}
 
 		bThread.halt();
@@ -84,4 +96,3 @@ public class Lift {
 		}
 	}
 }
-
