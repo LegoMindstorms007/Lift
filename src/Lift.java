@@ -18,25 +18,23 @@ public class Lift {
 		goDown = false;
 		running = true;
 
-		up();
-		down();
+		// up();
+		// down();
 
 		while (running) {
 			// control lift
 			if (goDown) {
 				down();
 			}
-			if (Button.waitForAnyPress(1000) > 0)
+			if (Button.waitForAnyPress(100) > 0) {
 				running = false;
+				Sound.playTone(440, 1000);
+			}
 		}
 
-		for (int i = 0; i < note.length; i += 2) {
-			short w = note[i + 1];
-			int n = note[i];
-			if (n != 0) {
-				Sound.playTone(n, w * 10);
-			}
-			sleep(w * 10);
+		for (int i = 0; i < 5; i++) {
+			Sound.playTone(440, 250);
+			sleep(250);
 		}
 
 		bThread.halt();
