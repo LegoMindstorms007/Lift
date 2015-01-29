@@ -1,27 +1,22 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Queue;
 
-import lejos.nxt.Sound;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
 
 public class BluetoothThread implements Runnable {
 
-	private static final long MAX_RESPONSE_TIME = 1000 * 60;
-	private static final String STATUS = "status";
-	private static final String DOWN = "down";
+	private static final int MOVE_DOWN = 0;
+	private static final int IS_DOWN = 1;
+	private static final int TIMEOUT = 1000 * 30; // half minute
 	private boolean running;
 	private Lift lift;
-	private Queue<String> waitingQueue;
-	private boolean isInLift;
-	private long lastResponse;
+	private NXTConnection connection;
 
 	public BluetoothThread(Lift lift) {
 		this.lift = lift;
-		waitingQueue = new Queue<String>();
-		isInLift = false;
+		connection = null;
 	}
 
 	/**
@@ -33,130 +28,61 @@ public class BluetoothThread implements Runnable {
 		running = true;
 
 		while (running) {
-			NXTConnection connection = Bluetooth.waitForConnection();
+			connection = Bluetooth.waitForConnection();
 
 			if (connection != null) {
-
-				// check time
-				if (!waitingQueue.isEmpty()) {
-					if ((System.currentTimeMillis() - lastResponse) > MAX_RESPONSE_TIME) {
-						waitingQueue.pop();
-					}
-				}
-
-				DataInputStream dis = connection.openDataInputStream();
-				DataOutputStream dos = connection.openDataOutputStream();
-				String input = "";
-
-				boolean endOfLine = false;
-
-				while (!endOfLine) {
-					try {
-						char next = dis.readChar();
-						if (next == '\0')
-							endOfLine = true;
-						input += next;
-
-					} catch (IOException e) {
-						break;
-					}
-				}
-				Sound.playTone(440, 1000);
-				input.trim();
-
-				// first value is identifier second is command
-				String[] whatToDo = split(input, ':');
-
-				// check if robot is in queue, otherwise push it onto the queue
-				if (!isInQueue(whatToDo[0])) {
-					waitingQueue.push(whatToDo[0]);
-				}
-				// check if robot is first in queue and set last Response
-				if (firstInQueue(whatToDo[0])) {
-					lastResponse = System.currentTimeMillis();
-				}
-
-				// evaluate command
-				if (STATUS.equals(whatToDo[1])) {
-
-					output(dos, evaluateStatus(whatToDo[0]));
-
-				} else if (DOWN.equals(whatToDo[1])) {
-					output(dos, evaluateDown(whatToDo[0]));
-				}
-
-				// close streams
 				try {
-					dis.close();
-					dos.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+
+					DataInputStream dis = connection.openDataInputStream();
+					DataOutputStream dos = connection.openDataOutputStream();
+
+					while (isConnected()) {
+						int command = input(dis);
+
+						switch (command) {
+						case MOVE_DOWN:
+							lift.goDown();
+							output(dos, true);
+							break;
+						case IS_DOWN:
+							boolean canExit = lift.canExitLift();
+							output(dos, canExit);
+
+							if (canExit) {
+								for (int i = 0; (i < TIMEOUT / 1000)
+										&& isConnected(); i++) {
+									sleep(1000);
+								}
+								if (isConnected()) {
+									connection.close();
+									connection = null;
+								}
+							}
+
+							break;
+						}
+					}
+					// close streams
+					try {
+						dis.close();
+						dos.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} catch (Exception e) {
+					// ignore
 				}
+				// close connection
 				connection.close();
+				lift.goUp();
 			}
 		}
 
-	}
-
-	private boolean evaluateDown(String name) {
-		boolean response = false;
-		if (firstInQueue(name)) {
-			lift.goDown();
-			isInLift = true;
-
-			// response
-			response = true;
-		}
-		return response;
-	}
-
-	private boolean evaluateStatus(String name) {
-		boolean response = false;
-		if (firstInQueue(name)) {
-
-			if (isInLift) {
-				boolean canExit = lift.canExitLift();
-				if (canExit) {
-					waitingQueue.pop();
-					response = true;
-					isInLift = false;
-				}
-			} else { // is not in lift but first in queue
-				response = true;
-			}
-		}
-		return response;
 	}
 
 	public void halt() {
 		running = false;
-	}
-
-	public String getNextInQueue() {
-		if (waitingQueue.isEmpty())
-			return "";
-
-		return (String) waitingQueue.pop();
-	}
-
-	public String[] split(String toSplit, char identifier) {
-		String[] splittedString = new String[2];
-
-		int index = toSplit.indexOf(identifier);
-
-		splittedString[0] = toSplit.substring(0, index);
-		splittedString[1] = toSplit.substring(index + 1);
-
-		return splittedString;
-	}
-
-	private boolean firstInQueue(String identifier) {
-		return ((String) waitingQueue.peek()).equals(identifier);
-	}
-
-	private boolean isInQueue(String identifier) {
-		return waitingQueue.indexOf(identifier) >= 0;
 	}
 
 	private void output(DataOutputStream stream, boolean value) {
@@ -166,6 +92,29 @@ public class BluetoothThread implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	private int input(DataInputStream stream) {
+		int value = 0;
+		try {
+			value = stream.readInt();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return value;
+	}
+
+	private boolean isConnected() {
+		return (connection != null) && (connection.available() >= 0);
+	}
+
+	private void sleep(int millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {
+			// ignore
 		}
 	}
 

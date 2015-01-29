@@ -7,23 +7,24 @@ public class Lift {
 	// private int angle;
 	private BluetoothThread bThread;
 	private boolean goDown;
+	private boolean goUp;
 	private boolean running;
-
-	private static final short[] note = { 2349, 115, 0, 5, 1760, 165, 0, 35 };
 
 	public Lift() {
 		bThread = new BluetoothThread(this);
 		new Thread(bThread).start();
 		goDown = false;
-		running = true;
+		goUp = true;
 
-		// up();
-		// down();
+		running = true;
 
 		while (running) {
 			// control lift
 			if (goDown) {
 				down();
+			}
+			if (goUp) {
+				up();
 			}
 			if (Button.waitForAnyPress(100) > 0) {
 				running = false;
@@ -33,11 +34,15 @@ public class Lift {
 		bThread.halt();
 	}
 
-	public synchronized void goDown() {
+	public void goDown() {
 		goDown = true;
 	}
 
-	private synchronized void up() {
+	public void goUp() {
+		goUp = true;
+	}
+
+	private void up() {
 		// go up
 		Motor.A.backward();
 		Motor.B.backward();
@@ -54,7 +59,7 @@ public class Lift {
 		setLEDs(true);
 	}
 
-	private synchronized void down() {
+	private void down() {
 		setLEDs(false);
 		// go down
 		Motor.A.rotateTo(0, true);
@@ -64,10 +69,6 @@ public class Lift {
 		Motor.B.waitComplete();
 
 		goDown = false;
-
-		sleep(WAITING_TIME);
-
-		up();
 	}
 
 	public boolean canExitLift() {
