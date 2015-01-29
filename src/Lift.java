@@ -1,6 +1,5 @@
 import lejos.nxt.Button;
 import lejos.nxt.Motor;
-import lejos.nxt.Sound;
 
 public class Lift {
 
@@ -28,13 +27,7 @@ public class Lift {
 			}
 			if (Button.waitForAnyPress(100) > 0) {
 				running = false;
-				Sound.playTone(440, 1000);
 			}
-		}
-
-		for (int i = 0; i < 5; i++) {
-			Sound.playTone(440, 250);
-			sleep(250);
 		}
 
 		bThread.halt();

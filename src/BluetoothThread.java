@@ -3,6 +3,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Queue;
 
+import lejos.nxt.Sound;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
 
@@ -60,8 +61,10 @@ public class BluetoothThread implements Runnable {
 						break;
 					}
 				}
+				Sound.playTone(440, 1000);
 				input.trim();
 
+				// first value is identifier second is command
 				String[] whatToDo = split(input, ':');
 
 				// check if robot is in queue, otherwise push it onto the queue
@@ -73,38 +76,16 @@ public class BluetoothThread implements Runnable {
 					lastResponse = System.currentTimeMillis();
 				}
 
+				// evaluate command
 				if (STATUS.equals(whatToDo[1])) {
-					if (firstInQueue(whatToDo[0])) {
 
-						if (isInLift) {
-							boolean canExit = lift.canExitLift();
-							if (canExit) {
-								waitingQueue.pop();
-								output(dos, true);
-								isInLift = false;
-							} else {
-								output(dos, false);
-							}
-						} else {
-							output(dos, true);
-						}
-					} else {
-						output(dos, false);
-
-					}
+					output(dos, evaluateStatus(whatToDo[0]));
 
 				} else if (DOWN.equals(whatToDo[1])) {
-					if (firstInQueue(whatToDo[0])) {
-						lift.goDown();
-						isInLift = true;
-
-						// response
-						output(dos, true);
-					} else {
-						output(dos, false);
-					}
+					output(dos, evaluateDown(whatToDo[0]));
 				}
 
+				// close streams
 				try {
 					dis.close();
 					dos.close();
@@ -116,6 +97,36 @@ public class BluetoothThread implements Runnable {
 			}
 		}
 
+	}
+
+	private boolean evaluateDown(String name) {
+		boolean response = false;
+		if (firstInQueue(name)) {
+			lift.goDown();
+			isInLift = true;
+
+			// response
+			response = true;
+		}
+		return response;
+	}
+
+	private boolean evaluateStatus(String name) {
+		boolean response = false;
+		if (firstInQueue(name)) {
+
+			if (isInLift) {
+				boolean canExit = lift.canExitLift();
+				if (canExit) {
+					waitingQueue.pop();
+					response = true;
+					isInLift = false;
+				}
+			} else { // is not in lift but first in queue
+				response = true;
+			}
+		}
+		return response;
 	}
 
 	public void halt() {
@@ -159,4 +170,3 @@ public class BluetoothThread implements Runnable {
 	}
 
 }
-
