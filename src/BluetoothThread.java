@@ -47,18 +47,6 @@ public class BluetoothThread implements Runnable {
 						case IS_DOWN:
 							boolean canExit = lift.canExitLift();
 							output(dos, canExit);
-
-							if (canExit) {
-								for (int i = 0; (i < TIMEOUT / 1000)
-										&& isConnected() && running; i++) {
-									sleep(1000);
-								}
-								if (isConnected()) {
-									connection.close();
-									connection = null;
-								}
-							}
-
 							break;
 						}
 					}
