@@ -1,16 +1,21 @@
 import lejos.nxt.Button;
 import lejos.nxt.Motor;
+import lejos.nxt.SensorPort;
 
 public class Lift {
 
 	// private int angle;
+	private static final int GREEN[] = { 0, 255, 0 };
+	private static final int RED[] = { 150, 0, 0 };
 	private BluetoothThread bThread;
 	private Thread thread;
 	private boolean goDown;
 	private boolean goUp;
 	private boolean running;
+	private LEDStrip leds;
 
 	public Lift() {
+		leds = new LEDStrip(SensorPort.S1);
 		bThread = new BluetoothThread(this);
 		thread = new Thread(bThread);
 		thread.start();
@@ -78,7 +83,10 @@ public class Lift {
 	}
 
 	private void setLEDs(boolean isFree) {
-
+		if (isFree)
+			leds.setRGB(GREEN[0], GREEN[1], GREEN[2]);
+		else
+			leds.setRGB(RED[0], RED[1], RED[2]);
 	}
 
 	public void sleep(int milliseconds) {
