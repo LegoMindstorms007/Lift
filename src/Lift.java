@@ -12,6 +12,7 @@ public class Lift {
 	private boolean goDown;
 	private boolean goUp;
 	private boolean running;
+	private boolean ready;
 	private LEDStrip leds;
 
 	public Lift() {
@@ -20,6 +21,9 @@ public class Lift {
 		thread = new Thread(bThread);
 		thread.start();
 		goDown = false;
+		ready = false;
+
+		setLEDs(false);
 		goUp = true;
 
 		running = true;
@@ -48,6 +52,10 @@ public class Lift {
 		goUp = true;
 	}
 
+	public boolean isReady() {
+		return ready;
+	}
+
 	private void up() {
 		// go up
 		Motor.A.backward();
@@ -64,9 +72,12 @@ public class Lift {
 
 		setLEDs(true);
 		goUp = false;
+		ready = true;
+		bThread.initTimeOut();
 	}
 
 	private void down() {
+		ready = false;
 		setLEDs(false);
 		// go down
 		Motor.A.rotateTo(0, true);

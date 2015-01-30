@@ -32,6 +32,9 @@ public class BluetoothThread implements Runnable {
 
 		while (running) {
 			connection = Bluetooth.waitForConnection();
+			if (lift.isReady()) {
+				initTimeOut();
+			}
 
 			if (connection != null) {
 				try {
@@ -40,18 +43,19 @@ public class BluetoothThread implements Runnable {
 					DataOutputStream dos = connection.openDataOutputStream();
 
 					while (running && isConnected()) {
+
 						int command = input(dis);
 
 						switch (command) {
 						case MOVE_DOWN:
 							lift.goDown();
 							output(dos, true);
+							initTimeOut();
 							break;
 						case IS_DOWN:
 							boolean canExit = lift.canExitLift();
 							output(dos, canExit);
-							if (canExit)
-								closeAt = System.currentTimeMillis() + TIMEOUT;
+							initTimeOut();
 							break;
 						case CLOSE_CONNECTION:
 							connection.close();
@@ -80,6 +84,10 @@ public class BluetoothThread implements Runnable {
 
 	public void halt() {
 		running = false;
+	}
+
+	public void initTimeOut() {
+		closeAt = TIMEOUT + System.currentTimeMillis();
 	}
 
 	private void output(DataOutputStream stream, boolean value) {
