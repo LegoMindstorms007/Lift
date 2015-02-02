@@ -6,7 +6,7 @@ public class Lift {
 
 	// private int angle;
 	private static final int GREEN[] = { 0, 255, 0 };
-	private static final int RED[] = { 150, 0, 0 };
+	private static final int RED[] = { 180, 0, 0 };
 	private BluetoothThread bThread;
 	private Thread thread;
 	private boolean goDown;
@@ -69,6 +69,9 @@ public class Lift {
 
 		Motor.A.stop();
 		Motor.B.stop();
+
+		Motor.A.rotate(45);
+		Motor.B.rotate(45);
 
 		setLEDs(true);
 		goUp = false;
