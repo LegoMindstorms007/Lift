@@ -10,6 +10,7 @@ public class BluetoothThread implements Runnable {
 	private static final int MOVE_DOWN = 0;
 	private static final int IS_DOWN = 1;
 	private static final int CLOSE_CONNECTION = 2;
+	private static final int IS_UP = 3;
 	private static final int TIMEOUT = 1000 * 30; // half minute
 	private long closeAt;
 	private boolean running;
@@ -32,9 +33,7 @@ public class BluetoothThread implements Runnable {
 
 		while (running) {
 			connection = Bluetooth.waitForConnection();
-			if (lift.isReady()) {
-				initTimeOut();
-			}
+			initTimeOut();
 
 			if (connection != null) {
 				try {
@@ -55,6 +54,11 @@ public class BluetoothThread implements Runnable {
 						case IS_DOWN:
 							boolean canExit = lift.canExitLift();
 							output(dos, canExit);
+							initTimeOut();
+							break;
+						case IS_UP:
+							boolean ready = lift.isReady();
+							output(dos, ready);
 							initTimeOut();
 							break;
 						case CLOSE_CONNECTION:
