@@ -88,6 +88,8 @@ public class Lift {
 
 		Motor.A.waitComplete();
 		Motor.B.waitComplete();
+
+		goDown = false;
 	}
 
 	public boolean canExitLift() {
